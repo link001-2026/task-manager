@@ -2,6 +2,9 @@
   "name": "supabase-task-manager",
   "version": "1.0.0",
   "description": "基于 Node.js + Supabase 的智能任务管理系统，适配 Vercel 部署",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
   }
