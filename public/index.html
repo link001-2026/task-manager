@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能任务管理系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background: #f5f7fa;
+      padding: 40px 20px;
+      max-width: 720px;
+      margin: 0 auto;
+      color: #2d3748;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    .add-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    #taskInput {
+      flex: 1;
+      min-width: 180px;
+      padding: 10px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #taskInput:focus {
+      border-color: #3182ce;
+    }
+    #prioritySelect {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .btn-add {
+      padding: 10px 20px;
+      background: #3182ce;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background .2s;
+    }
+    .btn-add:hover {
+      background: #2b6cb0;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #e2e8f0;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .2s;
+    }
+    .filter-btn.active {
+      background: #3182ce;
+      color: #fff;
+    }
+    .task-item {
+      background: #fff;
+      padding: 16px 18px;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .task-info {
+      flex: 1;
+      min-width: 200px;
+    }
+    .task-title {
+      font-size: 16px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .task-title.done {
+      text-decoration: line-through;
+      color: #a0aec0;
+    }
+    .priority-tag {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .p-high { background: #fed7d7; color: #c53030; }
+    .p-middle { background: #fefcbf; color: #b7791f; }
+    .p-low { background: #c6f6d5; color: #2f855a; }
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-toggle {
+      padding: 7px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #48bb78;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background .2s;
+    }
+    .btn-toggle:hover {
+      background: #38a169;
+    }
+    .btn-toggle.undo {
+      background: #ed8936;
+    }
+    .btn-toggle.undo:hover {
+      background: #dd6b20;
+    }
+    .btn-del {
+      padding: 7px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #f56565;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background .2s;
+    }
+    .btn-del:hover { background: #e53e3e; }
+    .empty-tip {
+      text-align: center;
+      color: #a0aec0;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>智能任务管理系统</h1>
+
+  <div class="add-card">
+    <input id="taskInput" type="text" placeholder="请输入任务内容...">
+    <select id="prioritySelect">
+      <option value="高">高优先级</option>
+      <option value="中" selected>中优先级</option>
+      <option value="低">低优先级</option>
+    </select>
+    <button class="btn-add" onclick="addTask()">添加任务</button>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-val="全部" onclick="setFilter('全部')">全部</button>
+    <button class="filter-btn" data-val="高" onclick="setFilter('高')">高优先级</button>
+    <button class="filter-btn" data-val="中" onclick="setFilter('中')">中优先级</button>
+    <button class="filter-btn" data-val="低" onclick="setFilter('低')">低优先级</button>
+  </div>
+
+  <div id="taskList">
+    <div class="empty-tip">加载中...</div>
+  </div>
+
+  <script>
+    let currentFilter = '全部';
+
+    function setFilter(val) {
+      currentFilter = val;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.val === val);
+      });
+      renderTasks();
+    }
+
+    async function renderTasks() {
+      const res = await fetch(`/api/tasks?filter=${encodeURIComponent(currentFilter)}`);
+      const tasks = await res.json();
+      const wrap = document.getElementById('taskList');
+
+      if (!tasks || tasks.length === 0) {
+        wrap.innerHTML = '<div class="empty-tip">暂无任务</div>';
+        return;
+      }
+
+      wrap.innerHTML = '';
+      tasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        const priorityClass = task.priority === '高' ? 'high' : task.priority === '中' ? 'middle' : 'low';
+        const toggleText = task.completed ? '设为未完成' : '设为完成';
+        const toggleClass = task.completed ? 'btn-toggle undo' : 'btn-toggle';
+
+        item.innerHTML = `
+          <div class="task-info">
+            <span class="task-title ${task.completed ? 'done' : ''}">${escapeHtml(task.title)}</span>
+            <span class="priority-tag p-${priorityClass}">${task.priority}优先级</span>
+          </div>
+          <div class="task-actions">
+            <button class="${toggleClass}" onclick="toggleTask('${task.id}', ${!task.completed})">${toggleText}</button>
+            <button class="btn-del" onclick="deleteTask('${task.id}')">删除</button>
+          </div>
+        `;
+        wrap.appendChild(item);
+      });
+    }
+
+    async function addTask() {
+      const input = document.getElementById('taskInput');
+      const title = input.value.trim();
+      const priority = document.getElementById('prioritySelect').value;
+
+      if (!title) return alert('请输入任务内容');
+
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, priority })
+      });
+
+      input.value = '';
+      renderTasks();
+    }
+
+    async function toggleTask(id, isCompleted) {
+      await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: isCompleted })
+      });
+      renderTasks();
+    }
+
+    async function deleteTask(id) {
+      if (!confirm('确定要删除这条任务吗？')) return;
+      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      renderTasks();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[c]));
+    }
+
+    document.getElementById('taskInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask();
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
